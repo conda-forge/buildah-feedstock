@@ -10,9 +10,7 @@ source:
   patches:
     # NOTE: This adds the memfd_create syscall which is not available on CentOS 6's kernels.
     - 0001-Add-missing-defines-for-CentOS-6.patch
-    - 0002-Avoid-LDFLAGS-override.patch
-    - 0003-Use-CPP-CC-and-flags-in-dep-check-scripts.patch
-    - 0004-Use-config-files-in-prefix-as-fallback.patch
+    - 0002-Use-config-files-in-prefix-as-fallback.patch
 
 build:
   number: 0
