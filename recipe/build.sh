@@ -20,6 +20,8 @@ make \
   install install.completions
 
 
+# If/when https://github.com/conda/conda-build/issues/4121 is supported, the
+# following can be greatly simplified.
 gather_licenses() {
   # shellcheck disable=SC2039  # Allow widely supported non-POSIX local keyword.
   local module output tmp_dir acc_dir
@@ -39,11 +41,11 @@ EOF
 go-licenses csv ${module}
 ================================================================================
 EOF
+    go get -d "${module}"
+    chmod -R +rw "$( go env GOPATH )"
     go-licenses csv "${module}" | sort >> "${output}"
-    go-licenses save "${module}" --save_path="${tmp_dir}"
-    chmod -R +w "${acc_dir}" "${tmp_dir}"
+    go-licenses save "${module}" --force --save_path="${tmp_dir}"
     cp -r "${tmp_dir}"/* "${acc_dir}"/
-    rm -r "${tmp_dir}"
   done
   # shellcheck disable=SC2016  # Not expanding $ in single quotes intentional.
   find "${acc_dir}" -type f | sort | xargs -L1 sh -c '
@@ -55,7 +57,7 @@ ${2#${1%/}/}
 EOF
 cat "${2}"
 ' -- "${acc_dir}" >> "${output}"
-  rm -r "${acc_dir}"
+  rm -r "${acc_dir}" "${tmp_dir}"
 }
 
 gather_licenses ./thirdparty-licenses.txt .
