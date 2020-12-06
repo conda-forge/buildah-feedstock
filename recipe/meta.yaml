@@ -7,7 +7,7 @@ package:
 source:
   url: https://github.com/containers/buildah/archive/v{{ version }}.tar.gz
   sha256: d868f94664f4c515aad98bf20c7f8019e67e533cbea1bc5655be9bd45c5965c3
-  folder: buildah
+  folder: src/github.com/containers/buildah
   patches:
     # NOTE: This adds the memfd_create syscall which is not available on CentOS 6's kernels.
     - 0001-Add-missing-defines-for-CentOS-6.patch
@@ -71,7 +71,7 @@ about:
   doc_url: https://github.com/containers/buildah
   license: Apache-2.0
   license_file:
-    - LICENSE
+    - src/github.com/containers/buildah/LICENSE
     - thirdparty-licenses.txt
   summary: A command line tool that facilitates building OCI container images.
   description: |

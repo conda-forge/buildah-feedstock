@@ -1,23 +1,27 @@
 #! /bin/sh
 
+module='github.com/containers/buildah'
+
+pushd "src/${module}"
 # Inject prefix path. (With sed since I couldn't get it to work with something
 # like EXTRA_LDFLAGS="-X something.condaPrefix=${PREFIX}" in make commands.)
 sed -i.bak \
   's|^\(// const char \*condaPrefix =\).*|\1 "'"${PREFIX}"'";|' \
-  buildah/vendor/github.com/containers/common/pkg/config/config.go
+  vendor/github.com/containers/common/pkg/config/config.go
 grep -qF \
   "// const char *condaPrefix = \"${PREFIX}\";" \
-  buildah/vendor/github.com/containers/common/pkg/config/config.go
+  vendor/github.com/containers/common/pkg/config/config.go
 
-make -C buildah \
+make \
   GIT_COMMIT= \
   PREFIX="${PREFIX}" \
   bin/buildah docs
 
-make -C buildah \
+make \
   GIT_COMMIT= \
   PREFIX="${PREFIX}" \
   install install.completions
+popd
 
 
 # If/when https://github.com/conda/conda-build/issues/4121 is supported, the
@@ -60,4 +64,4 @@ cat "${2}"
   rm -r "${acc_dir}" "${tmp_dir}"
 }
 
-gather_licenses ./thirdparty-licenses.txt ./buildah
+gather_licenses ./thirdparty-licenses.txt "${module}"
