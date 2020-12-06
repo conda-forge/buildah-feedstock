@@ -4,17 +4,17 @@
 # like EXTRA_LDFLAGS="-X something.condaPrefix=${PREFIX}" in make commands.)
 sed -i.bak \
   's|^\(// const char \*condaPrefix =\).*|\1 "'"${PREFIX}"'";|' \
-  vendor/github.com/containers/common/pkg/config/config.go
+  buildah/vendor/github.com/containers/common/pkg/config/config.go
 grep -qF \
   "// const char *condaPrefix = \"${PREFIX}\";" \
-  vendor/github.com/containers/common/pkg/config/config.go
+  buildah/vendor/github.com/containers/common/pkg/config/config.go
 
-make \
+make -C buildah \
   GIT_COMMIT= \
   PREFIX="${PREFIX}" \
   bin/buildah docs
 
-make \
+make -C buildah \
   GIT_COMMIT= \
   PREFIX="${PREFIX}" \
   install install.completions
@@ -60,4 +60,4 @@ cat "${2}"
   rm -r "${acc_dir}" "${tmp_dir}"
 }
 
-gather_licenses ./thirdparty-licenses.txt .
+gather_licenses ./thirdparty-licenses.txt ./buildah
