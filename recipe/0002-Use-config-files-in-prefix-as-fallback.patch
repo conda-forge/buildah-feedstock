@@ -1,11 +1,11 @@
 diff --git a/vendor/github.com/containers/common/pkg/config/config.go b/vendor/github.com/containers/common/pkg/config/config.go
-index 18fab548..e9e4d7a6 100644
+index 0483a00d..a370d126 100644
 --- a/vendor/github.com/containers/common/pkg/config/config.go
 +++ b/vendor/github.com/containers/common/pkg/config/config.go
-@@ -17,6 +17,33 @@ import (
+@@ -18,6 +18,34 @@ import (
  	"github.com/sirupsen/logrus"
  )
- 
+
 +// const char *condaPrefix = "";
 +import "C"
 +
@@ -33,10 +33,11 @@ index 18fab548..e9e4d7a6 100644
 +	return filepath.Join(condaPrefix, relativePath)
 +}
 +
++
  const (
  	// _configPath is the path to the containers/containers.conf
  	// inside a given config directory.
-@@ -501,8 +528,8 @@ func systemConfigs() ([]string, error) {
+@@ -618,8 +646,8 @@ func systemConfigs() ([]string, error) {
  		}
  		return append(configs, path), nil
  	}
@@ -48,10 +49,10 @@ index 18fab548..e9e4d7a6 100644
  	if _, err := os.Stat(OverrideContainersConfig); err == nil {
  		configs = append(configs, OverrideContainersConfig)
 diff --git a/vendor/github.com/containers/common/pkg/config/default.go b/vendor/github.com/containers/common/pkg/config/default.go
-index 5f8f4999..5bcdbe75 100644
+index bc88e513..6f902323 100644
 --- a/vendor/github.com/containers/common/pkg/config/default.go
 +++ b/vendor/github.com/containers/common/pkg/config/default.go
-@@ -113,9 +113,9 @@ const (
+@@ -111,9 +111,9 @@ const (
  	DefaultPidsLimit = 2048
  	// DefaultPullPolicy pulls the image if it does not exist locally
  	DefaultPullPolicy = "missing"
@@ -60,20 +61,20 @@ index 5f8f4999..5bcdbe75 100644
  	// policy.json file.
 -	DefaultSignaturePolicyPath = "/etc/containers/policy.json"
 +	defaultSignaturePolicyPath = "/etc/containers/policy.json"
- 	// DefaultRootlessSignaturePolicyPath is the location within
- 	// XDG_CONFIG_HOME of the rootless policy.json file.
- 	DefaultRootlessSignaturePolicyPath = "containers/policy.json"
-@@ -143,7 +143,8 @@ func DefaultConfig() (*Config, error) {
- 
+ 	// DefaultSubnet is the subnet that will be used for the default CNI
+ 	// network.
+ 	DefaultSubnet = "10.88.0.0/16"
+@@ -142,7 +142,8 @@ func DefaultConfig() (*Config, error) {
+
  	cniConfig := _cniConfigDir
- 
+
 -	defaultEngineConfig.SignaturePolicyPath = DefaultSignaturePolicyPath
 +	defaultSigPath := FallbackToPathInPrefix(defaultSignaturePolicyPath)
 +	defaultEngineConfig.SignaturePolicyPath = defaultSigPath
  	if unshare.IsRootless() {
  		configHome, err := homedir.GetConfigHome()
  		if err != nil {
-@@ -152,8 +153,8 @@ func DefaultConfig() (*Config, error) {
+@@ -151,8 +152,8 @@ func DefaultConfig() (*Config, error) {
  		sigPath := filepath.Join(configHome, DefaultRootlessSignaturePolicyPath)
  		defaultEngineConfig.SignaturePolicyPath = sigPath
  		if _, err := os.Stat(sigPath); err != nil {
@@ -83,50 +84,50 @@ index 5f8f4999..5bcdbe75 100644
 +				defaultEngineConfig.SignaturePolicyPath = defaultSigPath
  			}
  		}
- 		netns = "slirp4netns"
+ 		cniConfig = filepath.Join(configHome, _cniConfigDirRootless)
 diff --git a/vendor/github.com/containers/image/v5/docker/lookaside.go b/vendor/github.com/containers/image/v5/docker/lookaside.go
-index 06d616d0..d8c4dfd3 100644
+index 515e5932..83a15ec1 100644
 --- a/vendor/github.com/containers/image/v5/docker/lookaside.go
 +++ b/vendor/github.com/containers/image/v5/docker/lookaside.go
 @@ -9,6 +9,7 @@ import (
  	"path/filepath"
  	"strings"
- 
+
 +	"github.com/containers/common/pkg/config"
  	"github.com/containers/image/v5/docker/reference"
  	"github.com/containers/image/v5/internal/rootless"
  	"github.com/containers/image/v5/types"
-@@ -107,7 +108,7 @@ func registriesDirPath(sys *types.SystemContext) string {
+@@ -113,7 +114,7 @@ func registriesDirPathWithHomeDir(sys *types.SystemContext, homeDir string) stri
  		return filepath.Join(sys.RootForImplicitAbsolutePaths, systemRegistriesDirPath)
  	}
- 
+
 -	return systemRegistriesDirPath
 +	return config.FallbackToPathInPrefix(systemRegistriesDirPath)
  }
- 
+
  // builtinDefaultSignatureStorageDir returns default signature storage URL as per euid
 diff --git a/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go b/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go
-index ea2b2157..a3c5f343 100644
+index 4c1629f5..388a3700 100644
 --- a/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go
 +++ b/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go
-@@ -10,6 +10,7 @@ import (
+@@ -11,6 +11,7 @@ import (
  	"sync"
- 
+
  	"github.com/BurntSushi/toml"
 +	"github.com/containers/common/pkg/config"
  	"github.com/containers/image/v5/docker/reference"
  	"github.com/containers/image/v5/types"
  	"github.com/containers/storage/pkg/homedir"
-@@ -389,7 +390,7 @@ func newConfigWrapper(ctx *types.SystemContext) configWrapper {
+@@ -522,7 +523,7 @@ func newConfigWrapperWithHomeDir(ctx *types.SystemContext, homeDir string) confi
  	} else if ctx != nil && ctx.RootForImplicitAbsolutePaths != "" {
  		wrapper.configPath = filepath.Join(ctx.RootForImplicitAbsolutePaths, systemRegistriesConfPath)
  	} else {
 -		wrapper.configPath = systemRegistriesConfPath
 +		wrapper.configPath = config.FallbackToPathInPrefix(systemRegistriesConfPath)
  	}
- 
+
  	// potentially use both system and per-user dirs if not using per-user config file
-@@ -400,7 +401,7 @@ func newConfigWrapper(ctx *types.SystemContext) configWrapper {
+@@ -533,7 +534,7 @@ func newConfigWrapperWithHomeDir(ctx *types.SystemContext, homeDir string) confi
  		wrapper.configDirPath = filepath.Join(ctx.RootForImplicitAbsolutePaths, systemRegistriesConfDirPath)
  		wrapper.userConfigDirPath = userRegistriesDirPath
  	} else {
@@ -134,25 +135,25 @@ index ea2b2157..a3c5f343 100644
 +		wrapper.configDirPath = config.FallbackToPathInPrefix(systemRegistriesConfDirPath)
  		wrapper.userConfigDirPath = userRegistriesDirPath
  	}
- 
+
 diff --git a/vendor/github.com/containers/image/v5/signature/policy_config.go b/vendor/github.com/containers/image/v5/signature/policy_config.go
-index a4873e9f..d9331b0b 100644
+index 82fbb68c..b8bbc1b8 100644
 --- a/vendor/github.com/containers/image/v5/signature/policy_config.go
 +++ b/vendor/github.com/containers/image/v5/signature/policy_config.go
-@@ -20,6 +20,7 @@ import (
- 	"os"
+@@ -21,6 +21,7 @@ import (
  	"path/filepath"
- 
+ 	"regexp"
+
 +	"github.com/containers/common/pkg/config"
  	"github.com/containers/image/v5/docker/reference"
  	"github.com/containers/image/v5/transports"
  	"github.com/containers/image/v5/types"
-@@ -68,7 +69,7 @@ func defaultPolicyPath(sys *types.SystemContext) string {
+@@ -75,7 +76,7 @@ func defaultPolicyPathWithHomeDir(sys *types.SystemContext, homeDir string) stri
  	if sys != nil && sys.RootForImplicitAbsolutePaths != "" {
  		return filepath.Join(sys.RootForImplicitAbsolutePaths, systemDefaultPolicyPath)
  	}
 -	return systemDefaultPolicyPath
 +	return config.FallbackToPathInPrefix(systemDefaultPolicyPath)
  }
- 
+
  // NewPolicyFromFile returns a policy configured in the specified file.
