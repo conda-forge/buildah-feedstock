@@ -53,46 +53,46 @@ index c5fca7f0c..e66116ed0 100644
 --- a/vendor/github.com/containers/common/pkg/config/default.go
 +++ b/vendor/github.com/containers/common/pkg/config/default.go
 @@ -179,7 +179,8 @@ func DefaultConfig() (*Config, error) {
-                return nil, err
-        }
-
--       defaultEngineConfig.SignaturePolicyPath = DefaultSignaturePolicyPath
-+       defaultSigPath := FallbackToPathInPrefix(DefaultSignaturePolicyPath)
-+       defaultEngineConfig.SignaturePolicyPath = defaultSigPath
-        if useUserConfigLocations() {
-                configHome, err := homedir.GetConfigHome()
-                if err != nil {
+ 		return nil, err
+ 	}
+ 
+-	defaultEngineConfig.SignaturePolicyPath = DefaultSignaturePolicyPath
++	defaultSigPath := FallbackToPathInPrefix(DefaultSignaturePolicyPath)
++	defaultEngineConfig.SignaturePolicyPath = defaultSigPath
+ 	if useUserConfigLocations() {
+ 		configHome, err := homedir.GetConfigHome()
+ 		if err != nil {
 @@ -188,8 +189,8 @@ func DefaultConfig() (*Config, error) {
-                sigPath := filepath.Join(configHome, DefaultRootlessSignaturePolicyPath)
-                defaultEngineConfig.SignaturePolicyPath = sigPath
-                if _, err := os.Stat(sigPath); err != nil {
--                       if _, err := os.Stat(DefaultSignaturePolicyPath); err == nil {
--                               defaultEngineConfig.SignaturePolicyPath = DefaultSignaturePolicyPath
-+                       if _, err := os.Stat(defaultSigPath); err == nil {
-+                               defaultEngineConfig.SignaturePolicyPath = defaultSigPath
-                        }
-                }
-        }
+ 		sigPath := filepath.Join(configHome, DefaultRootlessSignaturePolicyPath)
+ 		defaultEngineConfig.SignaturePolicyPath = sigPath
+ 		if _, err := os.Stat(sigPath); err != nil {
+-			if _, err := os.Stat(DefaultSignaturePolicyPath); err == nil {
+-				defaultEngineConfig.SignaturePolicyPath = DefaultSignaturePolicyPath
++			if _, err := os.Stat(defaultSigPath); err == nil {
++				defaultEngineConfig.SignaturePolicyPath = defaultSigPath
+ 			}
+ 		}
+ 	}
 diff --git a/vendor/github.com/containers/image/v5/docker/registries_d.go b/vendor/github.com/containers/image/v5/docker/registries_d.go
 index 37087dd85..06dc511d7 100644
 --- a/vendor/github.com/containers/image/v5/docker/registries_d.go
 +++ b/vendor/github.com/containers/image/v5/docker/registries_d.go
 @@ -9,6 +9,7 @@ import (
-        "path/filepath"
-        "strings"
-
-+       "github.com/containers/common/pkg/config"
-        "github.com/containers/image/v5/docker/reference"
-        "github.com/containers/image/v5/internal/rootless"
-        "github.com/containers/image/v5/types"
+ 	"path/filepath"
+ 	"strings"
+ 
++	"github.com/containers/common/pkg/config"
+ 	"github.com/containers/image/v5/docker/reference"
+ 	"github.com/containers/image/v5/internal/rootless"
+ 	"github.com/containers/image/v5/types"
 @@ -100,7 +101,7 @@ func registriesDirPathWithHomeDir(sys *types.SystemContext, homeDir string) stri
-                return filepath.Join(sys.RootForImplicitAbsolutePaths, systemRegistriesDirPath)
-        }
-
--       return systemRegistriesDirPath
-+       return config.FallbackToPathInPrefix(systemRegistriesDirPath)
+ 		return filepath.Join(sys.RootForImplicitAbsolutePaths, systemRegistriesDirPath)
+ 	}
+ 
+-	return systemRegistriesDirPath
++	return config.FallbackToPathInPrefix(systemRegistriesDirPath)
  }
-
+ 
  // loadAndMergeConfig loads configuration files in dirPath
 diff --git a/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go b/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go
 index 4c1629f5..388a3700 100644
