@@ -49,32 +49,20 @@ index 0483a00d..a370d126 100644
  	if _, err := os.Stat(OverrideContainersConfig); err == nil {
  		configs = append(configs, OverrideContainersConfig)
 diff --git a/vendor/github.com/containers/common/pkg/config/default.go b/vendor/github.com/containers/common/pkg/config/default.go
-index bc88e513..6f902323 100644
+index c5fca7f0c..e66116ed0 100644
 --- a/vendor/github.com/containers/common/pkg/config/default.go
 +++ b/vendor/github.com/containers/common/pkg/config/default.go
-@@ -111,9 +111,9 @@ const (
- 	DefaultPidsLimit = 2048
- 	// DefaultPullPolicy pulls the image if it does not exist locally
- 	DefaultPullPolicy = "missing"
--	// DefaultSignaturePolicyPath is the default value for the
-+	// defaultSignaturePolicyPath is the default value for the
- 	// policy.json file.
--	DefaultSignaturePolicyPath = "/etc/containers/policy.json"
-+	defaultSignaturePolicyPath = "/etc/containers/policy.json"
- 	// DefaultSubnet is the subnet that will be used for the default CNI
- 	// network.
- 	DefaultSubnet = "10.88.0.0/16"
-@@ -142,7 +142,8 @@ func DefaultConfig() (*Config, error) {
-
- 	cniConfig := _cniConfigDir
-
+@@ -179,7 +179,8 @@ func DefaultConfig() (*Config, error) {
+ 		return nil, err
+ 	}
+ 
 -	defaultEngineConfig.SignaturePolicyPath = DefaultSignaturePolicyPath
-+	defaultSigPath := FallbackToPathInPrefix(defaultSignaturePolicyPath)
++	defaultSigPath := FallbackToPathInPrefix(DefaultSignaturePolicyPath)
 +	defaultEngineConfig.SignaturePolicyPath = defaultSigPath
- 	if unshare.IsRootless() {
+ 	if useUserConfigLocations() {
  		configHome, err := homedir.GetConfigHome()
  		if err != nil {
-@@ -151,8 +152,8 @@ func DefaultConfig() (*Config, error) {
+@@ -188,8 +189,8 @@ func DefaultConfig() (*Config, error) {
  		sigPath := filepath.Join(configHome, DefaultRootlessSignaturePolicyPath)
  		defaultEngineConfig.SignaturePolicyPath = sigPath
  		if _, err := os.Stat(sigPath); err != nil {
@@ -84,28 +72,28 @@ index bc88e513..6f902323 100644
 +				defaultEngineConfig.SignaturePolicyPath = defaultSigPath
  			}
  		}
- 		cniConfig = filepath.Join(configHome, _cniConfigDirRootless)
-diff --git a/vendor/github.com/containers/image/v5/docker/lookaside.go b/vendor/github.com/containers/image/v5/docker/lookaside.go
-index 515e5932..83a15ec1 100644
---- a/vendor/github.com/containers/image/v5/docker/lookaside.go
-+++ b/vendor/github.com/containers/image/v5/docker/lookaside.go
+ 	}
+diff --git a/vendor/github.com/containers/image/v5/docker/registries_d.go b/vendor/github.com/containers/image/v5/docker/registries_d.go
+index 37087dd85..06dc511d7 100644
+--- a/vendor/github.com/containers/image/v5/docker/registries_d.go
++++ b/vendor/github.com/containers/image/v5/docker/registries_d.go
 @@ -9,6 +9,7 @@ import (
  	"path/filepath"
  	"strings"
-
+ 
 +	"github.com/containers/common/pkg/config"
  	"github.com/containers/image/v5/docker/reference"
  	"github.com/containers/image/v5/internal/rootless"
  	"github.com/containers/image/v5/types"
-@@ -113,7 +114,7 @@ func registriesDirPathWithHomeDir(sys *types.SystemContext, homeDir string) stri
+@@ -100,7 +101,7 @@ func registriesDirPathWithHomeDir(sys *types.SystemContext, homeDir string) stri
  		return filepath.Join(sys.RootForImplicitAbsolutePaths, systemRegistriesDirPath)
  	}
-
+ 
 -	return systemRegistriesDirPath
 +	return config.FallbackToPathInPrefix(systemRegistriesDirPath)
  }
-
- // builtinDefaultSignatureStorageDir returns default signature storage URL as per euid
+ 
+ // loadAndMergeConfig loads configuration files in dirPath
 diff --git a/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go b/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go
 index 4c1629f5..388a3700 100644
 --- a/vendor/github.com/containers/image/v5/pkg/sysregistriesv2/system_registries_v2.go
