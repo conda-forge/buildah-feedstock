@@ -1,4 +1,4 @@
-{% set version = "1.24.2" %}
+{% set version = "1.28.0" %}
 
 package:
   name: buildah
@@ -6,7 +6,7 @@ package:
 
 source:
   url: https://github.com/containers/buildah/archive/v{{ version }}.tar.gz
-  sha256: 87f4c1e03c1cb513f1a15d7d94865d1f5cd80321dfcac4c57e31934e1c75d59d
+  sha256: 4e406a0cc6a90066cd471deea252fe8862dbd7fa9cb72b274617673d6159a32b
   patches:
     # NOTE: This adds the memfd_create syscall which is not available on CentOS 6's kernels.
     - 0001-Add-missing-defines-for-CentOS-6.patch
