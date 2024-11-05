@@ -1,11 +1,11 @@
-About buildah
-=============
+About buildah-feedstock
+=======================
+
+Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/buildah-feedstock/blob/main/LICENSE.txt)
 
 Home: https://buildah.io
 
 Package license: Apache-2.0
-
-Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/buildah-feedstock/blob/main/LICENSE.txt)
 
 Summary: A command line tool that facilitates building OCI container images.
 
