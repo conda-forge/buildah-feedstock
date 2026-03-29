@@ -6,5 +6,7 @@ conda_install_tool: pixi
 github:
   branch_name: main
   tooling_branch_name: main
+github_actions:
+  store_build_artifacts: true
 provider:
   linux_aarch64: default
