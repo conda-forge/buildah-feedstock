@@ -10,19 +10,19 @@ package:
 source:
   url: https://github.com/containers/buildah/archive/v${{ version }}.tar.gz
   sha256: 87f4c1e03c1cb513f1a15d7d94865d1f5cd80321dfcac4c57e31934e1c75d59d
-  patches:
+  # patches:
     # NOTE: This adds the memfd_create syscall which is not available on CentOS 6's kernels.
     # - 0001-Add-missing-defines-for-CentOS-6.patch
     # - 0002-Use-config-files-in-prefix-as-fallback.patch
 
 build:
-  # Binary relocation causes:
-  #   buildah-in-a-user-namespace: error while loading shared libraries: libseccomp.so.2: cannot open shared object file: No such file or directory
-  # because of https://github.com/containers/buildah/commit/a6ed6883017fa8f1c7e6bd2ccd19e600107dd675
   number: 0
   skip: not linux
   dynamic_linking:
     binary_relocation: false
+  # Binary relocation causes:
+  #   buildah-in-a-user-namespace: error while loading shared libraries: libseccomp.so.2: cannot open shared object file: No such file or directory
+  # because of https://github.com/containers/buildah/commit/a6ed6883017fa8f1c7e6bd2ccd19e600107dd675
 
 requirements:
   build:
