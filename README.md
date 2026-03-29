@@ -3,7 +3,7 @@ About buildah-feedstock
 
 Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/buildah-feedstock/blob/main/LICENSE.txt)
 
-Home: https://buildah.io
+Home: https://buildah.io/
 
 Package license: Apache-2.0
 
@@ -15,13 +15,12 @@ Documentation: https://github.com/containers/buildah
 
 The Buildah package provides a command line tool which can be used to:
 
-  * Create a working container, either from scratch or using an image as a starting point.
-  * Mount a working container's root filesystem for manipulation.
-  * Unmount a working container's root filesystem.
-  * Use the updated contents of a container's root filesystem as a filesystem layer to create a new image.
-  * Delete a working container or an image.
-  * Rename a local container.
-
+* Create a working container, either from scratch or using an image as a starting point.
+* Mount a working container's root filesystem for manipulation.
+* Unmount a working container's root filesystem.
+* Use the updated contents of a container's root filesystem as a filesystem layer to create a new image.
+* Delete a working container or an image.
+* Rename a local container.
 
 Current build status
 ====================
