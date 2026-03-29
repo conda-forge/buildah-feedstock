@@ -54,7 +54,7 @@ about:
   license: Apache-2.0
   license_file:
     - LICENSE
-    - thirdparty-licenses.txt
+    - license-files/
   summary: A command line tool that facilitates building OCI container images.
   description: |
     The Buildah package provides a command line tool which can be used to:
