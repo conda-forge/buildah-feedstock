@@ -16,7 +16,7 @@ source:
     # - 0002-Use-config-files-in-prefix-as-fallback.patch
 
 build:
-  number: 0
+  number: 1
   skip: not linux
   dynamic_linking:
     binary_relocation: false
